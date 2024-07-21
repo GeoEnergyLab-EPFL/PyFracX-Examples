@@ -15,7 +15,7 @@ In each sub-folder, when running the script - if the option save_results =True a
 ## Organization
 This repository is organized with the following sub-folders
 
-- Reference-Solutions/ contains python modules containing existing reference solutions with sub-folders HF for hydraulic fracture (tensile mode I case) and FDFR for fluid-driven frictional ruptures
+- ReferenceSolutions/ contains python modules containing existing reference solutions with sub-folders HF for hydraulic fracture (tensile mode I case) and FDFR for fluid-driven frictional ruptures
 -  2D-uncoupled/ contains sub-folders with scripts for 2D plane elasticity configurations for frictional ruptures for which the evolution of pore-pressure is not affected by mechanical deformation such that only the mechanical part of the solver is used
 - 2D-coupled/ contains sub-folders with scripts for 2D plane elasticity configurations using the coupled hydromechanical solver (thus allowing to model coupled as well uncoupled case)
 -  3D-uncoupled/ contains sub-folders with scripts for 3D configurations for frictional ruptures for which the evolution of pore-pressure is not affected by mechanical deformation such that only the mechanical part of the solver is used
