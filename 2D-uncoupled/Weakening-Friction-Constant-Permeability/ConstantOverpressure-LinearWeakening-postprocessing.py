@@ -18,7 +18,7 @@ from hm.HMFsolver import HMFSolution
 
 #%% loading numerical results 
 # here you need to change basefolder to the folder name of your simulation
-basefolder ='./2D-ctP-LinearWeakening-MarginallyPressurized-21-07-2024-16-42-57/'
+basefolder ='./2D-ctP-LinearWeakening-MarginallyPressurized-21-07-2024-18-40-40/'
 basename="2D-ctP-LinearWeakening-MarginallyPressurized"
 
 # we load n_steps - please adjst as per your simulation 
@@ -156,3 +156,5 @@ plt.xlabel("x (m)")
 plt.ylabel("Yield function (Pa) at time last step")
 plt.show()
 
+
+# %%
