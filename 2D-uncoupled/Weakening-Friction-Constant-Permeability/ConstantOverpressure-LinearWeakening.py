@@ -29,7 +29,7 @@ YoungM=1.0
 nu=0.0
 shear_prime=YoungM/(2*(1+nu)*2*(1-nu))
 shear_g = YoungM/(2*(1+nu))
-c_s = np.sqrt(shear_g/1.)
+c_s = np.sqrt(shear_g/(1.))
 c_p = c_s * np.sqrt(2*(1-nu)/(1.-2*nu))
 # fault friction
 f_p=1.
@@ -90,8 +90,8 @@ mat_properties={"Peak friction":friction_p,"Residual friction":friction_r,"Peak 
 frictionModel_LW=FrictionVar2D(mat_properties,Nelts,linearEvolution,tol=1.e-6,yield_atol=1e-6*sigmap_o)  # linear frictional weakening model
 
 # quasi-dynamics term (put here to a small value)
-eta_s = 1.e-4*0.5 *shear_g / c_s
-eta_p = 1.e-4*0.5 *shear_g / c_p
+eta_s = 1.e-3*0.5 *shear_g / c_s
+eta_p = 1.e-3*0.5 *shear_g / c_p
 qd=QuasiDynamicsOperator(Nelts,2,eta_s,eta_p)
 
 # creating the mechanical model: hmat, preconditioner, number of collocation points, constitutive model

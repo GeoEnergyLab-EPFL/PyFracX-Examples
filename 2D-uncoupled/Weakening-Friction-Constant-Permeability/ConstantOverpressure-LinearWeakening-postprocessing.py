@@ -18,12 +18,12 @@ from hm.HMFsolver import HMFSolution
 
 #%% loading numerical results 
 # here you need to change basefolder to the folder name of your simulation
-basefolder ='./2D-ctP-LinearWeakening-MarginallyPressurized-21-07-2024-18-40-40/'
+basefolder ='./res_data/2D-ctP-LinearWeakening-MarginallyPressurized-10-02-2025-14-46-39/'
 basename="2D-ctP-LinearWeakening-MarginallyPressurized"
 
 # we load n_steps - please adjst as per your simulation 
 res = []
-n_steps =160 
+n_steps =125 
 for i in range(n_steps):
     tt = from_dict_to_dataclass(HMFSolution,json_read(basefolder+basename+'-'+str(i+1)))
     res.append(tt)
