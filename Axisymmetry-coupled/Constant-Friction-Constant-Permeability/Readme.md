@@ -27,10 +27,10 @@ A mesh with 3126 elements is used. The default adaptive time-stepping is used.
 
 We compare the slip profile of the fault with the analytical solution given by Viesca, Robert C. "Asymptotic solutions for self-similar fault slip induced by fluid injection at constant rate." arXiv preprint arXiv:2401.13828 (2024). 
 
-![Verification of slip profile](./slip_const_fric.png)
+![Verification of slip profile](./figures_ref/slip_const_fric.png)
 
 Similarly, we also compare the evolution of the rupture radius with the analytical expression for the amplification factor given in Sáez & Lecampion (2022).
-![Evolution of rupture radius](./rupture_radius.png)
+![Evolution of rupture radius](./figures_ref/rupture_radius.png)
 
 The results agree very well with both 1) the analytical solution for the slip profile and 2) the rupture radius obtained from the analytical expression.
 
@@ -61,8 +61,8 @@ c) Overpressure ratio, $P = \Delta p_*/\sigma'_o$.
 ### Comparisons reference / PyfracX
 The solver offers two evolution laws of slip-weakening friction: a) linear and b) exponential. Here we compare the results of the simulations with linear slip-weakening friction law. The reference plots are from Figure 7 in Sáez & Lecampion (2023). 
 
-![Evolution of rupture radius in a linear slip-weakening fault P 0.05](./lw_0_05_verification.png)
+![Evolution of rupture radius in a linear slip-weakening fault P 0.05](./figures_ref/lw_0_05_verification.png)
 
-![Evolution of rupture radius in a linear slip-weakening fault P 0.035](./lw_0_035_verification.png)
+![Evolution of rupture radius in a linear slip-weakening fault P 0.035](./figures_ref/lw_0_035_verification.png)
 
 From the figures, it is evident that the solver is closely reproducing the benchmark results. It is well capable of capturing exactly the instant of nucleation of a dynamic rupture as the friction weakens and as well as the arrest of the rupture as it catches up with the fluid front. 

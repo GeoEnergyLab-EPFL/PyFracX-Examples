@@ -18,10 +18,10 @@ it needs further pressurization to continue propagating aseismically at residual
 A mesh with 2000 elements is used. The default adaptive time-stepping is used. 
 
 We compare the evolution of crack length (scaled by the nucleation lengthscale $a_w$) as function of the ratio between the diffusion front over the nucleation lengthscale. 
-![Scaled Crack Length ](./CrackLength.png)
+![Scaled Crack Length ](./figures_ref/CrackLength.png)
 
 Similarly, we also compare the evolution of the scaled peak-slip (located at the center where fluid is injected).
-![Scaled Peak Slip ](./PeakSlip.png)
+![Scaled Peak Slip ](./figures_ref/PeakSlip.png)
 
 The results agree very well with both 1) the solution for the constant peak friction at early (see the constant friction example) and 2) the complete reference results from Garagash & Germanovich.
 
@@ -30,4 +30,4 @@ Note that in these figures the reference solution "goes" back in time during the
 It is interesting to see that the solver adapt the time-step (reduce it) to capture the instability. 
 This can be observed in the figure below where the value of the current time-step is plotted as function of time during the simulation. 
 
-![Evolution of time step during the simulation ](./TimeStepEvol.png)
+![Evolution of time step during the simulation ](./figures_ref/TimeStepEvol.png)

@@ -1,0 +1,10 @@
+res_data
+*venv
+logs*
+
+# Ignore generated figure directories but keep reference figures
+figures_*/
+!figures_ref/
+
+__pycache__
+run_all_examples.log

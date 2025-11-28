@@ -36,7 +36,7 @@ class KGD_Mvertex:
             ]
         )
 
-    def half_length(self, t=np.array([1.0], np.float_)):
+    def half_length(self, t=np.array([1.0], np.float64)):
         L_m = (
             (self.Qo_**0.5)
             * (self.Eprime_ ** (1.0 / 6.0))
