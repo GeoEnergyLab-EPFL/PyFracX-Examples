@@ -16,7 +16,7 @@ import scienceplots
 
 plt.style.use(["science", "grid"])
 
-from pyfracx.mesh.usmesh import usmesh
+from pyfracx.mesh.usmesh import UnstructuredMesh
 from pyfracx.utils.json_dict_dataclass_utils import *
 from pyfracx.hm.HMFsolver import HMFSolution
 from pyfracx.loads.Injection import *
@@ -100,7 +100,7 @@ param = json_read(os.path.join(basefolder, "Parameters"))
 mesh = json_read(os.path.join(basefolder, "Mesh"))
 Nelts = mesh["Nelts"]
 coor1D = np.array(mesh["Coordinates"])[:, 0]
-mesh = usmesh(2, np.array(mesh["Coordinates"]), np.array(mesh["Connectivity"]), 0)
+mesh = UnstructuredMesh(2, np.array(mesh["Coordinates"]), np.array(mesh["Connectivity"]), 0)
 
 Qinj = param["Injection"]["Constant Rate"]
 wh_o = param["Flow"]["who"]

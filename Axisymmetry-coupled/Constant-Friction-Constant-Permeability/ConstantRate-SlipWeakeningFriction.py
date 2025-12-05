@@ -20,7 +20,7 @@ import time
 from scipy import linalg
 
 
-from pyfracx.mesh.usmesh import usmesh
+from pyfracx.mesh.usmesh import UnstructuredMesh
 from pyfracx.MaterialProperties import PropertyMap
 from pyfracx.mechanics.friction2D import *
 from pyfracx.mechanics.evolutionLaws import *
@@ -177,7 +177,7 @@ print("First time step", t_first_step)
 coor1D = np.linspace(0.0, domain_size, Nelts + 1)
 coor = np.transpose(np.array([coor1D, coor1D * 0.0]))
 conn = np.fromfunction(lambda i, j: i + j, (Nelts, 2), dtype=int)
-mesh = usmesh(2, coor, conn, 0)
+mesh = UnstructuredMesh(2, coor, conn, 0)
 
 Nelts = mesh.nelts
 Nnodes = mesh.nnodes

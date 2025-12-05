@@ -26,7 +26,7 @@ plt.style.use(["science", "grid"])
 
 
 #  Imports from PyFracX
-from pyfracx.mesh.usmesh import usmesh
+from pyfracx.mesh.usmesh import UnstructuredMesh
 from pyfracx.utils.json_dict_dataclass_utils import *
 from pyfracx.hm.HMFsolver import HMFSolution
 from pyfracx.loads.Injection import *
@@ -109,7 +109,7 @@ for step in step_numbers:
 param = json_read(os.path.join(basefolder, "Parameters"))
 
 mm = json_read(os.path.join(basefolder, "Mesh"))
-mesh = usmesh(2, np.array(mm["Coordinates"]), np.array(mm["Connectivity"]), 0)
+mesh = UnstructuredMesh(2, np.array(mm["Coordinates"]), np.array(mm["Connectivity"]), 0)
 
 Qinj = param["Injection"]["Injection rate"]
 YoungM = param["Elasticity"]["Young"]

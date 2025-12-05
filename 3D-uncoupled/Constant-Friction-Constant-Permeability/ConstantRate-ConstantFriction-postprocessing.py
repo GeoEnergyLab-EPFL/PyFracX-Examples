@@ -15,7 +15,7 @@ import scienceplots
 
 plt.style.use(["science", "grid"])
 
-from pyfracx.mesh.usmesh import usmesh
+from pyfracx.mesh.usmesh import UnstructuredMesh
 from pyfracx.utils.json_dict_dataclass_utils import *
 from pyfracx.hm.HMFsolver import HMFSolution
 from pyfracx.mechanics.H_Elasticity import *
@@ -113,11 +113,11 @@ Nelts = mm["Nelts"]
 conn = np.array(mm["Connectivity"])
 coor = np.array(mm["Coordinates"])
 Nnodes = len(coor)
-mesh = usmesh(3, coor, conn, 0)
+mesh = UnstructuredMesh(3, coor, conn, 0)
 
 colPts = [
     (coor[conn[i][0]] + coor[conn[i][1]] + coor[conn[i][2]]) / 3.0 for i in range(Nelts)
-]  # put it in usmesh
+]  # put it in UnstructuredMesh
 r = np.array([scipy.linalg.norm(coor[i]) for i in range(Nnodes)])
 r_col = np.array([scipy.linalg.norm(colPts[i]) for i in range(Nelts)])
 

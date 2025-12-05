@@ -18,7 +18,7 @@ import scienceplots
 
 plt.style.use(["science", "grid"])
 
-from pyfracx.mesh.usmesh import usmesh
+from pyfracx.mesh.usmesh import UnstructuredMesh
 from pyfracx.utils.json_dict_dataclass_utils import *
 from pyfracx.hm.HMFsolver import HMFSolution
 
@@ -107,7 +107,7 @@ param = json_read(os.path.join(basefolder, "Parameters"))
 mm = json_read(os.path.join(basefolder, "Mesh"))
 Nelts = mm["Nelts"]
 coor1D = np.array(mm["Coordinates"])[:, 0]
-# mesh  = usmesh(2, np.array(mesh["Coordinates"]), np.array(mesh["Connectivity"]), 0)
+# mesh  = UnstructuredMesh(2, np.array(mesh["Coordinates"]), np.array(mesh["Connectivity"]), 0)
 
 alpha_hyd = param["Flow"]["Hydraulic diffusivity"]
 T = param["T parameter"]

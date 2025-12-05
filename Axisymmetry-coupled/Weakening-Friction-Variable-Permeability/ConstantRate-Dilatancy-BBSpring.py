@@ -15,7 +15,7 @@ import numpy as np
 import time
 from datetime import datetime
 
-from pyfracx.mesh.usmesh import usmesh
+from pyfracx.mesh.usmesh import UnstructuredMesh
 from pyfracx.utils.App import TimeIntegrationApp
 from pyfracx.hm.HMFsolver import HMFSolution, hmf_coupled_step
 from pyfracx.mechanics.H_Elasticity import Elasticity
@@ -101,7 +101,7 @@ Nelts = int(Rend / h_x)
 coor1D = np.linspace(r_w, Rend, Nelts + 1)
 coor = np.transpose(np.array([coor1D, coor1D * 0.0]))
 conn = np.fromfunction(lambda i, j: i + j, (Nelts, 2), dtype=int)
-me = usmesh(2, coor, conn, 1)
+me = UnstructuredMesh(2, coor, conn, 1)
 
 ################################################   6. HYDRAULIC PROPERTIES OF THE FAULT ZONE   ###################
 

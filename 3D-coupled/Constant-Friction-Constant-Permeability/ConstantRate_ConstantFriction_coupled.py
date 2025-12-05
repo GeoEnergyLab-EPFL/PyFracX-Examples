@@ -26,7 +26,7 @@ import scipy.special as sc
 
 
 # %%
-from pyfracx.mesh.usmesh import usmesh
+from pyfracx.mesh.usmesh import UnstructuredMesh
 from pyfracx.mesh.mesh_utils import *
 from pyfracx.MaterialProperties import PropertyMap
 
@@ -110,7 +110,7 @@ with pygmsh.geo.Geometry() as geom:
     geom.synchronize()
     g_mesh = geom.generate_mesh(order=1, algorithm=2)
 
-mesh = usmesh.fromMeshio(g_mesh, 1)
+mesh = UnstructuredMesh.fromMeshio(g_mesh, 1)
 
 # swap connectivity because
 swap_c = mesh.conn.copy()

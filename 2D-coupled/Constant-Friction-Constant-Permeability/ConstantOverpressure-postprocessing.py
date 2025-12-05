@@ -20,7 +20,7 @@ import scienceplots
 
 plt.style.use(["science", "grid"])
 
-from pyfracx.mesh.usmesh import usmesh
+from pyfracx.mesh.usmesh import UnstructuredMesh
 from pyfracx.utils.json_dict_dataclass_utils import *
 from pyfracx.hm.HMFsolver import HMFSolution
 

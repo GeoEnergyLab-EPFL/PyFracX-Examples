@@ -15,9 +15,9 @@ Once done you should be set to execute all the examples of this repository. Each
 
 You can run all examples by executing :
 ```bash
-run_all_examples.sh # run all simulations (takes up to a few hours)
-run_all_postprocessing.sh # generate all associated figures
-clean_figures.sh # to clean all the generated figures
+./run_all_examples.sh # run all simulations (takes up to a few hours)
+./run_all_postprocessing.sh # generate all associated figures
+./clean_figures.sh # to clean all the generated figures
 ```
 
 These examples have been developed and tested only on Unix OS, some incompatibilities with Windows regarding paths management are to be expected.

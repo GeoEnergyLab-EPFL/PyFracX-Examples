@@ -15,7 +15,7 @@ import time
 from datetime import datetime
 
 
-from pyfracx.mesh.usmesh import usmesh
+from pyfracx.mesh.usmesh import UnstructuredMesh
 from pyfracx.mechanics.H_Elasticity import *
 from pyfracx.MaterialProperties import PropertyMap
 from pyfracx.mechanics.friction2D import *
@@ -74,7 +74,7 @@ coor = np.transpose(np.array([coor1D, coor1D * 0.0]))
 conn = np.fromfunction(lambda i, j: i + j, (Nelts, 2), dtype=int)
 colPts = (coor1D[1:] + coor1D[0:-1]) / 2.0  # collocation points for P0
 # BE hierarchical matrix creation
-me = usmesh(2, coor, conn, 0)
+me = UnstructuredMesh(2, coor, conn, 0)
 
 # analytical solution for pressure at collocation points for a constant over-pressure at the center
 pressure = lambda x, t, Dpcenter: Dpcenter * special.erfc(

@@ -14,7 +14,7 @@ from scipy import special
 import time, sys
 from datetime import datetime
 
-from pyfracx.mesh.usmesh import usmesh
+from pyfracx.mesh.usmesh import UnstructuredMesh
 from pyfracx.mechanics.H_Elasticity import *
 from pyfracx.MaterialProperties import PropertyMap
 from pyfracx.mechanics.mech_utils import *
@@ -80,7 +80,7 @@ Nelts = 2000
 coor1D = np.linspace(-10.0, 10.0, Nelts + 1)
 coor = np.transpose(np.array([coor1D, coor1D * 0.0]))
 conn = np.fromfunction(lambda i, j: i + j, (Nelts, 2), dtype=int)
-me = usmesh(2, coor, conn, 0)
+me = UnstructuredMesh(2, coor, conn, 0)
 colPts = (coor1D[1:] + coor1D[0:-1]) / 2.0  # collocation points for P0
 
 # analytical solution for pressure at collocation points for a constant over-pressure at the center

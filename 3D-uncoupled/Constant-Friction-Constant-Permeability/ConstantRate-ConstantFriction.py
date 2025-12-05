@@ -16,7 +16,7 @@ from scipy.sparse.linalg import splu
 from scipy.sparse import csr_matrix
 from scipy.special import exp1
 
-from pyfracx.mesh.usmesh import usmesh
+from pyfracx.mesh.usmesh import UnstructuredMesh
 from pyfracx.mesh.mesh_utils import *
 from pyfracx.MaterialProperties import PropertyMap
 
@@ -57,7 +57,7 @@ def pres(r, t, c=1.0):  # divided by dp_c
 
 
 # %% mesh the circular fracture with gmsh with a refinement in the center.
-# the mesh is then converted to a usmesh object
+# the mesh is then converted to a UnstructuredMesh object
 import pygmsh
 
 center_res = 0.005
@@ -101,7 +101,7 @@ with pygmsh.geo.Geometry() as geom:
     geom.synchronize()
     g_mesh = geom.generate_mesh(order=1, algorithm=2)
 
-mesh = usmesh.fromMeshio(g_mesh, 1)
+mesh = UnstructuredMesh.fromMeshio(g_mesh, 1)
 
 # swap connectivity because
 swap_c = mesh.conn.copy()
@@ -114,7 +114,7 @@ Nelts = mesh.nelts
 Nnodes = mesh.nnodes
 colPts = [
     (coor[conn[i][0]] + coor[conn[i][1]] + coor[conn[i][2]]) / 3.0 for i in range(Nelts)
-]  # put it in usmesh
+]  # put it in UnstructuredMesh
 r = np.array([scipy.linalg.norm(coor[i]) for i in range(Nnodes)])
 r_col = np.array([scipy.linalg.norm(colPts[i]) for i in range(Nelts)])
 #

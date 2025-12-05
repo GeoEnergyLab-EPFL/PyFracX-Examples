@@ -24,7 +24,7 @@ import sys
 import pygmsh
 
 
-from pyfracx.mesh.usmesh import usmesh
+from pyfracx.mesh.usmesh import UnstructuredMesh
 from pyfracx.mechanics.H_Elasticity import Elasticity
 from pyfracx.MaterialProperties import PropertyMap
 from pyfracx.mechanics.friction3D import *
@@ -116,7 +116,7 @@ with pygmsh.geo.Geometry() as geom:
     geom.synchronize()
     g_mesh = geom.generate_mesh(order=1, algorithm=2)
 
-mesh = usmesh.fromMeshio(g_mesh, 1)
+mesh = UnstructuredMesh.fromMeshio(g_mesh, 1)
 # %%
 # swap connectivity because
 swap_c = mesh.conn.copy()
@@ -133,7 +133,7 @@ coor = np.asarray(mesh.coor)
 conn = np.asarray(mesh.conn)
 colPts = [
     (coor[conn[i][0]] + coor[conn[i][1]] + coor[conn[i][2]]) / 3.0 for i in range(Nelts)
-]  # put it in usmesh
+]  # put it in UnstructuredMesh
 r = np.array([scipy.linalg.norm(coor[i]) for i in range(Nnodes)])
 r_col = np.array([scipy.linalg.norm(colPts[i]) for i in range(Nelts)])
 

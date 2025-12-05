@@ -24,7 +24,7 @@ import mpmath
 
 
 #  Imports from PyFracX
-from pyfracx.mesh.usmesh import usmesh
+from pyfracx.mesh.usmesh import UnstructuredMesh
 from pyfracx.mesh.mesh_utils import *
 from pyfracx.MaterialProperties import PropertyMap
 
@@ -111,7 +111,7 @@ tag = -1
 eleTags, nodeTags = gmsh.model.mesh.getElementsByType(eletype, tag)
 nodeTags = nodeTags.reshape((-1, 3)) - 1
 # gmsh.fltk.run()
-mesh = usmesh(coor=coords, conn=nodeTags, dimension=3)
+mesh = UnstructuredMesh(coor=coords, conn=nodeTags, dimension=3)
 gmsh.finalize()
 
 Nelts = mesh.nelts

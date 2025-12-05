@@ -26,7 +26,7 @@ from pyfracx.utils.options_utils import NonLinearSolve_options
 from pyfracx.hm.HMFsolver import HMFSolution, hmf_coupled_step
 from pyfracx.utils.options_utils import TimeIntegration_options
 from pyfracx.utils.App import TimeIntegrationApp
-from pyfracx.mesh.usmesh import usmesh
+from pyfracx.mesh.usmesh import UnstructuredMesh
 
 # %%
 
@@ -47,7 +47,7 @@ Rinf = 20
 coor1D = np.linspace(0, Rinf, Nelts + 1)
 coor = np.transpose(np.array([coor1D, coor1D * 0.0]))
 conn = np.fromfunction(lambda i, j: i + j, (Nelts, 2), dtype=int)
-mesh = usmesh(2, coor, conn, 0)
+mesh = UnstructuredMesh(2, coor, conn, 0)
 
 colPts = (coor1D[1:] + coor1D[0:-1]) / 2.0  # collocation points for P0
 col_pts = np.c_[colPts, np.zeros(colPts.shape[0])]
