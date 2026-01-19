@@ -153,7 +153,7 @@ ax.plot(
     "b--",
     label=r"Scaled Diffusion front $\sqrt{4\\alpha t}/a_w$",
 )
-ax.plot(ref_length[:, 0], ref_length[:, 1], "-k", label=r"G&G 2012 reference solution")
+ax.plot(ref_length[:, 0], ref_length[:, 1], "-k", label=r"G\&G 2012 reference solution")
 ax.plot(
     np.sqrt(4 * alpha_hyd * tts) / aw, cr_front / aw, ".", label="Numerical results"
 )
@@ -177,7 +177,10 @@ slip_0 = np.abs(np.array([res[i].DDs_plastic[Nelts] for i in range(len(res))]))
 fig, ax = plt.subplots()
 
 ax.plot(
-    ref_peak_slip[:, 0], ref_peak_slip[:, 1], "-k", label=r"G&G 2012 reference solution"
+    ref_peak_slip[:, 0],
+    ref_peak_slip[:, 1],
+    "-k",
+    label=r"G\&G 2012 reference solution",
 )
 ax.plot(np.sqrt(4 * alpha_hyd * tts) / aw, slip_0, ".", label="Numerical results")
 plt.xlabel(r"$\sqrt{4\\alpha t}/a_w$ (-)")

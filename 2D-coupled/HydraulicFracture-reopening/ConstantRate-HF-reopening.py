@@ -148,7 +148,7 @@ mat_properties = {
 frictionModel = FrictionCt2D(mat_properties, Nelts)
 
 # creating the mechanical model: hmat, preconditioner, number of collocation points, constitutive model
-mech_model = MechanicalModel(h1, me.nelts, frictionModel, precType="Jacobi")
+mech_model = MechanicalModel(h1, me.nelts, frictionModel, precType="ILUT")
 
 # injection under constant rate
 the_inj = Injection(np.array([0.0, 0.0]), np.array([[0.0, Qinj]]), "Rate")
@@ -187,7 +187,7 @@ sol0 = HMFSolution(
 #                 "Tangent solver":{"Mechanics":{"GMRES":{"Max iterations":150,"Tolerance":1.e-8,"Absolute tolerance":1e-2,"Restart":150,"Preconditioner side":"Left"},"Initial guess factor":0.1}}}
 # stepper options
 # newton solve options
-res_atol = 1e-3 * max(np.linalg.norm(effective_tractions_0.flatten()), 1e3)
+res_atol = 1e-6 * max(np.linalg.norm(effective_tractions_0.flatten()), 1e6)
 print("res_atol: %g" % (res_atol))
 newton_solver_options = NonLinearSolve_options(
     max_iterations=20,
@@ -195,8 +195,8 @@ newton_solver_options = NonLinearSolve_options(
     residuals_rtol=np.inf,
     dx_atol=np.inf,
     dx_rtol=1e-2,
-    line_search=True,
-    line_search_type="cheap",
+    line_search=False,
+    line_search_type="none",
     verbose=True,
 )
 # options for the jacobian solver
@@ -212,12 +212,13 @@ jac_solve_options = IterativeLinearSolve_options(
     mech_rtol=1e-4,
     mech_atol=1,
     mech_max_iterations=int(me.nelts / 2),
+    schur_A11_app_inv_type="ILU",
 )
 # combining the 2 as option for the non-linear time-step
 step_solve_options = NonLinear_step_options(
     jacobian_solver_type="BICGSTAB",
     jacobian_solver_opts=jac_solve_options,
-    non_linear_start_factor=0.0,
+    non_linear_start_factor=1.0,
     non_linear_solver_opts=newton_solver_options,
 )
 
@@ -256,13 +257,14 @@ maxSteps = 300  # 800
 tend = 1.5e4
 # options of the time inegration !  note that we also pass the step_solve_options
 ts_options = TimeIntegration_options(
-    max_attempts=4,
+    max_attempts=10,
     dt_reduction_factor=1.5,
-    max_dt_increase_factor=1.2,
+    max_dt_increase_factor=1.1,
     lte_goal=0.01,
     acceptance_a_tol=res_atol,
     minimum_dt=dt_ini / 10.0,
     stepper_opts=step_solve_options,
+    accept_unconverged=False,
 )
 
 my_simul = TimeIntegrationApp(

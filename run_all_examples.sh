@@ -17,7 +17,7 @@ scripts=(
     "Axisymmetry-uncoupled/Constant-Friction-Constant-Permeability/ConstantRate-SlipWeakeningFriction.py"
     "Axisymmetry-uncoupled/Constant-Friction-Constant-Permeability/ConstantRate-ConstantFriction-MarginallyPressurised.py"
     "Axisymmetry-coupled/Constant-Friction-Constant-Permeability/ConstantRate-ConstantFriction-CriticallyStressed.py"
-    "Axisymmetry-coupled/Constant-Friction-Constant-Permeability/ConstantRate-SlipWeakeningFriction.py"
+    # "Axisymmetry-coupled/Constant-Friction-Constant-Permeability/ConstantRate-SlipWeakeningFriction.py"
     "Axisymmetry-coupled/Constant-Friction-Constant-Permeability/ConstantRate-ConstantFriction-shutin.py"
     "Axisymmetry-coupled/Constant-Friction-Constant-Permeability/ConstantRate-ConstantFriction-MarginallyPressurised.py"
     "Axisymmetry-coupled/HydraulicFracture-reopening/run_simulation.py"

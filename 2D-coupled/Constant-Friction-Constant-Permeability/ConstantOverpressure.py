@@ -190,7 +190,7 @@ jac_solve_options = IterativeLinearSolve_options(
 
 # combining the 2 as option for the non-linear time-step
 step_solve_options = NonLinear_step_options(
-    jacobian_solver_type="GMRES",
+    jacobian_solver_type="BICGSTAB",
     jacobian_solver_opts=jac_solve_options,
     non_linear_start_factor=0.0,
     non_linear_solver_opts=newton_solver_options,
