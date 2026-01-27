@@ -9,3 +9,4 @@ figures_*/
 __pycache__
 run_all_examples.log
 .DS_Store
+.vscode
