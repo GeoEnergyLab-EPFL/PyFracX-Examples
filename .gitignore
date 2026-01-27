@@ -1,16 +1,11 @@
-.env
-3D-coupled/hydraulic_fracture_reopening/res_data/
-3D-coupled/Constant-Friction-Constant-Permeability/res_data/
-3D-uncoupled/Constant-Friction-Constant-Permeability/res_data/
-2D-uncoupled/Constant-Friction-Constant-Permeability/res_data/
-2D-uncoupled/Weakening-Friction-Constant-Permeability/res_data/
-2D-coupled/Constant-Friction-Constant-Permeability/res_data/
-2D-coupled/Weakening-Friction-Constant-Permeability/res_data/
-2D-coupled/Constant-Friction-Dilatant/res_data/
-2D-coupled/Constant-Friction-Dilatant/
-Axisymmetry-coupled/Basel/res_data/
-Archive.zip
-*.zip
-Archive/
+res_data
+*venv
+logs*
 
-PyFracX-Examples.code-workspace
+# Ignore generated figure directories but keep reference figures
+figures_*/
+!figures_ref/
+
+__pycache__
+run_all_examples.log
+.DS_Store

@@ -8,11 +8,38 @@ import sys
 from datetime import datetime
 from pathlib import Path
 import numpy as np
-from matplotlib import pyplot as plt
+import logging
+import time
+import shutil
+
+from pyfracx.mechanics.H_Elasticity import Elasticity
+from pyfracx.MaterialProperties import PropertyMap
+from pyfracx.mechanics.friction2D import FrictionCt2D
+from pyfracx.mechanics.mech_utils import MechanicalModel
+from pyfracx.flow.flow_utils import FlowModelFractureSegments_axis
+from pyfracx.flow.FlowConstitutiveLaws import CubicLawNewtonian
+from pyfracx.loads.Injection import Injection
+from pyfracx.hm.HMFsolver import HMFSolution, hmf_coupled_step
+from pyfracx.utils.options_utils import NonLinear_step_options
+from pyfracx.utils.options_utils import IterativeLinearSolve_options
+from pyfracx.utils.options_utils import NonLinearSolve_options
+from pyfracx.hm.HMFsolver import HMFSolution, hmf_coupled_step
+from pyfracx.utils.options_utils import TimeIntegration_options
+from pyfracx.utils.App import TimeIntegrationApp
+from pyfracx.mesh.usmesh import UnstructuredMesh
+
+# %%
+
+Simul_description = "3D Axis Symm - constant rate - zero toughness Hydraulic Fracture"
+now = datetime.now()
+dt_string = now.strftime("%d-%m-%Y-%H-%M-%S")
+basename = "3DAxiSymmHF"
+res_dir = os.path.join(os.path.dirname(__file__), "res_data")
+os.makedirs(res_dir, exist_ok=True)
+basefolder = os.path.join(res_dir, f"{basename}_{dt_string}")
 
 
 # %% Mesh
-from mesh.usmesh import usmesh
 
 # simple 1D mesh uniform
 Nelts = 1000
@@ -20,7 +47,7 @@ Rinf = 20
 coor1D = np.linspace(0, Rinf, Nelts + 1)
 coor = np.transpose(np.array([coor1D, coor1D * 0.0]))
 conn = np.fromfunction(lambda i, j: i + j, (Nelts, 2), dtype=int)
-mesh = usmesh(2, coor, conn, 0)
+mesh = UnstructuredMesh(2, coor, conn, 0)
 
 colPts = (coor1D[1:] + coor1D[0:-1]) / 2.0  # collocation points for P0
 col_pts = np.c_[colPts, np.zeros(colPts.shape[0])]
@@ -29,7 +56,7 @@ print("Mesh size", h_x)
 
 # %% Elasticity Parameters
 G = 20e9  # Young's Modulus [Pa]
-nu = 0.0 # Poisson's ratio
+nu = 0.0  # Poisson's ratio
 E = 2 * G * (1 + nu)  # Shear modulus
 E_prime = E / (1 - nu * nu)
 
@@ -44,13 +71,13 @@ fluid_visc_prime = fluid_visc * 12
 
 # %% Field Parameters
 # fault friction
-fp = 0.6 # peak friction
-fd = 0.0 # dilatancy
+fp = 0.6  # peak friction
+fd = 0.0  # dilatancy
 
 # dimensionless numbers
-taubyfsigop = 0.0 # \tau / (f \sigma_o^p), should be zero for no shear crack @INPUT
-pcbysigop = 100 # p_c / \sigma_o^p @INPUT
-beta_s = 0.869 # Skempton coefficient @INPUT
+taubyfsigop = 0.0  # \tau / (f \sigma_o^p), should be zero for no shear crack @INPUT
+pcbysigop = 100  # p_c / \sigma_o^p @INPUT
+beta_s = 0.869  # Skempton coefficient @INPUT
 
 # far-field effective tractions
 sigo = 15e6  # [Pa]
@@ -65,17 +92,20 @@ ks = 1e3 * G  # shear spring [Pa/m]
 #     2e2 * E_prime, 1e1 * sigop / wo, 1e1 / ((cf) * wo), 1e1 * ks
 # )  # (sig_o_p / wh_o)  # opening spring [Pa/m]
 # kn = 1e1 * kn
-kn = (1 - beta_s) / (beta_s * cf  * wo)
+kn = (1 - beta_s) / (beta_s * cf * wo)
 
 
 # %% # Elasticity model
-from mechanics.H_Elasticity import Elasticity
-import time
 
 kernel = "Axi3DS0-H"
 elas_properties = np.array([E, nu])
 elastic_m = Elasticity(
-    kernel, elas_properties, max_leaf_size=32, eta=3.0, eps_aca=1.0e-4,n_openMP_threads=8
+    kernel,
+    elas_properties,
+    max_leaf_size=32,
+    eta=3.0,
+    eps_aca=1.0e-4,
+    n_openMP_threads=8,
 )
 # hmat creation
 hmat = elastic_m.constructHmatrix(mesh)
@@ -89,8 +119,6 @@ elapsed = (time.process_time() - zt) / 20
 print("elapsed time", elapsed)
 
 # %% Interface law
-from MaterialProperties import PropertyMap
-from mechanics.friction2D import FrictionCt2D
 
 friction_c = PropertyMap(
     np.zeros(Nelts, dtype=int), np.array([fp])
@@ -111,15 +139,10 @@ mat_properties = {
 interface_Model = FrictionCt2D(mat_properties, Nelts, yield_atol=1.0e-6 * sigop)
 
 # %% Mechanical Model
-from mechanics.mech_utils import MechanicalModel
 
 mech_model = MechanicalModel(hmat, mesh.nelts, interface_Model)
 
 # %% Flow Model
-from flow.flow_utils import FlowModelFractureSegments_axis
-from flow.FlowConstitutiveLaws import CubicLawNewtonian
-from loads.Injection import Injection
-
 
 # Injection under constant rate
 the_inj = Injection(np.array([0.0, 0.0]), np.array([[0.0, Qinj]]), "Rate")
@@ -142,7 +165,6 @@ flow_model = FlowModelFractureSegments_axis(mesh, cubicModel, the_inj)
 
 
 # %% Initial conditions
-from hm.HMFsolver import HMFSolution, hmf_coupled_step
 
 # time stepping parameters
 tinitial = 0
@@ -172,9 +194,6 @@ sol0 = HMFSolution(
 )
 
 # %% Solver options
-from utils.options_utils import NonLinear_step_options
-from utils.options_utils import IterativeLinearSolve_options
-from utils.options_utils import NonLinearSolve_options
 
 
 # max 1 kPa, norm(t0)
@@ -196,13 +215,13 @@ newton_solver_options = NonLinearSolve_options(
 jac_solve_options = IterativeLinearSolve_options(
     max_iterations=200,
     restart_iterations=200,
-    absolute_tolerance=0.,
+    absolute_tolerance=0.0,
     relative_tolerance=1e-5,
     preconditioner_side="Left",
     schur_ilu_fill_factor=10,
     schur_ilu_drop_tol=1e-4,
     mech_rtol=1e-5,
-    mech_atol=0.,
+    mech_atol=0.0,
     mech_max_iterations=300,
 )
 
@@ -214,7 +233,6 @@ step_solve_options = NonLinear_step_options(
 )
 
 # %% Define solver wrapper
-from hm.HMFsolver import HMFSolution, hmf_coupled_step
 
 
 def StepWrapper(solN: HMFSolution, dt: float) -> HMFSolution:
@@ -254,21 +272,10 @@ model_parameters = {
 
 # %% Create the simulation folder
 # dd/mm/YY H:M:S
-folder ="./" # + "/data/" # @INPUT, where to save the data
-Simul_description = "3D Axis Symm - constant rate - zero toughness Hydraulic Fracture"
-now = datetime.now()
-dt_string = now.strftime("%d-%m-%Y-%H-%M-%S")
-basename = "3DAxiSymmHF"
-basefolder = folder + basename + "-" + dt_string + "/"
-
-Path(basefolder).mkdir(parents=True, exist_ok=True)
-
 
 
 # %% Simulation options
 
-from utils.options_utils import TimeIntegration_options
-from utils.App import TimeIntegrationApp
 
 ts_options = TimeIntegration_options(
     max_attempts=10,
@@ -281,7 +288,7 @@ ts_options = TimeIntegration_options(
     acceptance_a_tol=step_solve_options.non_linear_solver_opts.residuals_atol,
 )
 
-# %% 
+# %%
 h_r = Rinf / Nelts
 alpha = wo**2 / (12 * fluid_visc * cf)
 dt_ini = min(1 * h_r**2 / alpha, 0.1)
@@ -323,21 +330,18 @@ my_simul.setupSimulation(
 my_simul.ts.save_to_file(0)
 my_simul.saveConfigToBinary()
 my_simul.saveParametersToJSon()
-mesh.saveToJson(basefolder + "Mesh.json")
+mesh.saveToJson(os.path.join(basefolder, "Mesh.json"))
 
 # %%
-import logging
 logging.info("Simulation folder created at : " + basefolder)
 logging.info("Geometry and Mesh: %d / %d" % (Rinf, Nelts))
 logging.info("dpc/sigop = %e" % (pcbysigop))
 logging.info("taubyfsigop = %.2f" % (taubyfsigop))
 logging.info("cf sigop = %e" % (cf * sigop))
-logging.info("skempton coeff = %e" % (1/(1 + kn * cf * wo)))
+logging.info("skempton coeff = %e" % (1 / (1 + kn * cf * wo)))
 
 
 # %% Run Simulation
-import time
-import shutil
 
 # save run script in folder
 shutil.copy2(__file__, basefolder)

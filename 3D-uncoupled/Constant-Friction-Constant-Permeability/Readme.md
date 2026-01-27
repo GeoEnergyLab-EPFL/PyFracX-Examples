@@ -25,12 +25,12 @@ In the example investigated below, the fault is critically stressed with a T val
 
 A mesh with 3504 triangular elements is used as shown in the figure below. The default adaptive time-stepping is used. 
 
-![triangular mesh](./mesh3d.png)
+![triangular mesh](./figures_ref/mesh3d.png)
 
 The yield function is plotted in the figure below. It can be clearly seen that the  rupture front is elliptical.
 
-![yield function 3d rupture](./yieldf_3d_ctfric.png)
+![yield function 3d rupture](./figures_ref/yieldf_3d_ctfric.png)
 
 We also plot the accumulated slip in the x-direction in the figure below 
 
-![Slip along x](./slip_3d_ctfric.png)
+![Slip along x](./figures_ref/slip_3d_ctfric.png)

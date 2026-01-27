@@ -3,9 +3,9 @@
 #
 
 #
-# UnCoupled fluid injection into a planar frictional fault (plane-strain problem) due to a constant over-pressure
-# Linear weakening friction reference results from Germanovich & Garagash (2012)
-# parameters taken from Ciardo et al IJNME 2021
+# UnCoupled fluid injection into a 2D planar frictional fault (plane-strain problem) due to a constant over-pressure
+# Constant friction reference results from Viesca (2021)
+# All properties are constant
 #
 # %% imports
 import os
@@ -25,17 +25,14 @@ from pyfracx.hm.HMFsolver import HMFSolution
 sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
 from ReferenceSolutions.FDFR.Plane_TwoD_frictional_ruptures import *
 
-# %% load reference results from G&G 2012 for that parameter sets
-solu = json_read("../../ReferenceSolutions/FDFR/LW-2D-GG12-MP-reference-1")
 
-ref_length = np.array(solu["Scaled Crack Length"])
-ref_peak_slip = np.array(solu["Scaled slip at center"])
+# %% loading numerical results
 
 # %% loading numerical results
 # here you need to change basefolder to the folder name of your simulation
 # set it to None to look for the most recent simulation
 basefolder = None
-basename = "2D-ctP-LinearWeakening-MarginallyPressurized"
+basename = "2D-ctP-ctFriction"
 
 # Looking for the most recent simulation
 if basefolder is None:
@@ -64,7 +61,7 @@ if basefolder is None:
     # Check if we found any folders
     if not matching_folders:
         raise FileNotFoundError(
-            f"No folder found matching pattern '{basename}_DD-MM-YYYY-HH-MM-SS' in '{res_dir}'"
+            f"No folder found matching pattern '{basename}-DD-MM-YYYY-HH-MM-SS' in '{res_dir}'"
         )
 
     # Sort by datetime (most recent last) and pick the most recent
@@ -111,15 +108,14 @@ coor1D = np.array(mm["Coordinates"])[:, 0]
 
 alpha_hyd = param["Flow"]["Hydraulic diffusivity"]
 T = param["T parameter"]
+f_p = param["Friction"]
+sigmap_o = param["Initial stress"][0]
+tau_o = param["Initial stress"][1]
+YoungM = param["Elasticity"]["Young"]
+nu = param["Elasticity"]["Nu"]
 
-mm = json_read(os.path.join(basefolder, "Mesh"))
-coor1D = np.array(mm["Coordinates"])[:, 0]
-
-title_string = (
-    " $T_p$ ="
-    + str(np.round(T, 2))
-    + r", $\Delta P / \sigma'_o =0.5$, $f_r/f_p=0.6$, $\\tau_o / (f_p \sigma'_o)=0.55$"
-)
+shear_prime = YoungM / (2 * (1 + nu) * 2 * (1 - nu))
+dpcenter = (1.0 - tau_o / (f_p * sigmap_o)) * sigmap_o / T
 
 # %% Setup figure directory
 figure_dir = f"figures_{basename}"
@@ -128,69 +124,150 @@ os.makedirs(figure_dir, exist_ok=True)
 # %% plots
 
 
-lam = marginallyPressurized_lambda(T)  # for the early peak friction solution
+# Select time-step to plot profiles later
+jj = len(res) - 2
+t = res[jj].time
 
+# numerical results
 tts = np.array([res[i].time for i in range(len(res))])
 nyi = np.array([res[i].Nyielded for i in range(len(res))])
-cr_front = nyi / 2.0 * (coor1D[1] - coor1D[0])
+cr_front = nyi / 2.0 * (coor1D[1] - coor1D[0])  # only for uniform mesh
 
-#  Crack half length
+# analytical solution
+if T < 0.4:
+    lam = 2 / (np.pi ** (3 / 2)) * 1 / T
+    print("Critically stressed case lambda=", lam)
+else:
+    lam = (np.pi ** (3 / 2)) / 4.0 * (1 - T)
+    print("Marginally pressurized case lambda=", lam)
 
-t_ = np.linspace(0.001, tts.max(), 1000)
-y_ = lam * np.sqrt(4.0 * alpha_hyd * t_)
-yr_ = 1 * np.sqrt(4.0 * alpha_hyd * t_)
-aw = 0.5
+y_ = lam * np.sqrt(4.0 * alpha_hyd * tts)  # crack front from analytical solution
+
+# %%  Plot: crack half length VS time
 fig, ax = plt.subplots()
-ax.plot(
-    np.sqrt(4 * alpha_hyd * t_) / aw,
-    y_ / 0.5,
-    "r",
-    label="Peak friction analytical solution",
-)
-ax.plot(
-    np.sqrt(4 * alpha_hyd * t_) / aw,
-    np.sqrt(4.0 * alpha_hyd * t_) / aw,
-    "b--",
-    label=r"Scaled Diffusion front $\sqrt{4\\alpha t}/a_w$",
-)
-ax.plot(ref_length[:, 0], ref_length[:, 1], "-k", label=r"G\&G 2012 reference solution")
-ax.plot(
-    np.sqrt(4 * alpha_hyd * tts) / aw, cr_front / aw, ".", label="Numerical results"
-)
-plt.title(title_string)
-plt.xlabel(r"$\sqrt{4 \\alpha t} / a_w$ (-)")
-plt.ylabel(r"Crack half-length $a / a_w$ (-)")
+ax.loglog(tts, y_, "r", label="Analytical")
+ax.loglog(tts, cr_front, ".", label="Numerical")
+plt.xlabel("Time (s)")
+plt.ylabel("Crack half-length (m)")
 ax.legend()
 plt.savefig(
-    os.path.join(figure_dir, "crack_halflength_scaled.png"),
+    os.path.join(figure_dir, "crack_halflength_vs_time.png"),
     dpi=200,
     bbox_inches="tight",
 )
 # plt.show()
 
+# %% Plot: Slip profile (Dimensionless)
+if T > 0.4:
+    xx = np.linspace(-1, 1, Nelts)
+    # analytical_slip = marginallyStressed_slip(xx)
+    analytical_slip = marginallyPressurized_slip(xx)
+    slip_scale_MP = lam**2 * np.sqrt(4 * alpha_hyd * t) * f_p * dpcenter / shear_prime
+    numerical_slip = -np.array(res[jj].DDs)[0::2] / slip_scale_MP
+    fig, ax = plt.subplots()
+    ax.plot(xx, analytical_slip, "r.", label="Analytical")
+    ax.plot(
+        (coor1D[1:] + coor1D[0:-1]) / (2.0 * cr_front[jj]),
+        numerical_slip,
+        "b-",
+        label="Numerical",
+    )
+    plt.xlabel("x (-)")
+    plt.ylabel("Non-dimensional slip (-)")
+    ax.legend()
+    ax.set_xlim([-1.0, 1.0])  # range for x-axis
+    plt.savefig(
+        os.path.join(figure_dir, "slip_profile_nondimensional.png"),
+        dpi=200,
+        bbox_inches="tight",
+    )
+    # plt.show()
+else:
+    xx = (coor1D[1:] + coor1D[0:-1]) / 2
+    xx_new = xx[(xx < cr_front[jj]) & (xx > -cr_front[jj])]
 
-# %% peak slip at center
+    slip_scale_CS = np.sqrt(4 * alpha_hyd * t) * f_p * dpcenter / shear_prime
+    numerical_slip = -np.array(res[jj].DDs)[0::2] / slip_scale_CS
 
-# we extract the shear slip at the central point (because there is 2 dofs per elt)
-Nelts = mm["Nelts"]
-slip_0 = np.abs(np.array([res[i].DDs_plastic[Nelts] for i in range(len(res))]))
-fig, ax = plt.subplots()
+    fig, ax = plt.subplots()
+    ax.plot(xx / cr_front[jj], numerical_slip, "b.", label="Numerical")
 
-ax.plot(
-    ref_peak_slip[:, 0],
-    ref_peak_slip[:, 1],
-    "-k",
-    label=r"G\&G 2012 reference solution",
-)
-ax.plot(np.sqrt(4 * alpha_hyd * tts) / aw, slip_0, ".", label="Numerical results")
-plt.xlabel(r"$\sqrt{4\\alpha t}/a_w$ (-)")
-plt.ylabel(r"Scaled slip at center $\delta(0)/\delta_w$ (-)")
-plt.title(title_string)
-ax.legend()
-plt.savefig(
-    os.path.join(figure_dir, "peak_slip_at_center.png"), dpi=200, bbox_inches="tight"
-)
-# plt.show()
+    x_ = (
+        xx_new[(xx_new > cr_front[jj] / 2.0) | (xx_new < -cr_front[jj] / 2)]
+        / cr_front[jj]
+    )
+    analytical_slip_Out = criticallyStressed_slip_Outer(x_)
+    ax.plot(x_, analytical_slip_Out, "r--", label="Analytical outer")
+
+    x__ = xx[(xx < cr_front[jj] / 2.0) & (xx > -cr_front[jj] / 2)]
+    xhat__ = x__ / np.sqrt(4 * alpha_hyd * t)
+    analytical_slip_In = criticallyStressed_slip_Inner(xhat__, lam)
+    ax.plot(x__ / cr_front[jj], analytical_slip_In, "g--", label="Analytical inner")
+
+    ax.legend()
+    ax.set_xlim([-1.0, 1.0])  # range for x-axis
+    plt.xlabel("x (-)")
+    plt.ylabel("Non-dimensional slip (-)")
+    plt.savefig(
+        os.path.join(figure_dir, "slip_profile_nondimensional.png"),
+        dpi=200,
+        bbox_inches="tight",
+    )
+    # plt.show()
+
+# %% Plot: Slip profile (Dimensional)
+
+if T > 0.4:
+    xx = (coor1D[1:] + coor1D[0:-1]) / 2
+    analytical_slip = marginallyStressed_slip_dimensional(
+        xx, T, alpha_hyd, t, f_p, dpcenter, shear_prime
+    )
+    numerical_slip = -np.array(res[jj].DDs)[0::2]
+    fig, ax = plt.subplots()
+    ax.plot(xx, analytical_slip, "r-", label="Analytical")
+    ax.plot(xx, numerical_slip, "b.", label="Numerical")
+    plt.xlabel("x (m)")
+    plt.ylabel("Slip (m)")
+    ax.legend()
+    ax.set_xlim([-cr_front[jj], cr_front[jj]])  # range for x-axis
+    plt.savefig(
+        os.path.join(figure_dir, "slip_profile_dimensional.png"),
+        dpi=200,
+        bbox_inches="tight",
+    )
+    # plt.show()
+else:
+    xx = (coor1D[1:] + coor1D[0:-1]) / 2
+    xx_new = xx[(xx < cr_front[jj]) & (xx > -cr_front[jj])]
+
+    slip_scale_CS = np.sqrt(4 * alpha_hyd * t) * f_p * dpcenter / shear_prime
+    numerical_slip = -np.array(res[jj].DDs)[0::2]
+
+    fig, ax = plt.subplots()
+    ax.plot(xx, numerical_slip, label="Numerical")
+
+    x_ = xx_new[(xx_new > cr_front[jj] / 2.0) | (xx_new < -cr_front[jj] / 2)]
+    analytical_slip_Out = slip_scale_CS * criticallyStressed_slip_Outer(
+        x_ / cr_front[jj]
+    )
+    ax.plot(x_, analytical_slip_Out, "r--", label="Analytical outer")
+
+    x__ = xx[(xx < y_[jj] / 2.0) & (xx > -y_[jj] / 2)]
+    analytical_slip_In = slip_scale_CS * criticallyStressed_slip_Inner(
+        x__ / np.sqrt(4.0 * alpha_hyd * t), lam
+    )
+    ax.plot(x__, analytical_slip_In, "g--", label="Analytical inner")
+
+    ax.legend()
+    ax.set_xlim([-cr_front[jj], cr_front[jj]])  # range for x-axis
+    plt.xlabel("x (m)")
+    plt.ylabel("Slip (m)")
+    plt.savefig(
+        os.path.join(figure_dir, "slip_profile_dimensional.png"),
+        dpi=200,
+        bbox_inches="tight",
+    )
+    # plt.show()
 
 
 # %% time - stepping

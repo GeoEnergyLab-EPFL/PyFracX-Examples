@@ -1,31 +1,42 @@
-# %%
-# Importing the necessary python libraries and managing the python path
+# %% This file is part of PyFracX.
+#
+# Created by Brice Lecampion on 08.01.25.
+# Copyright (c) ECOLE POLYTECHNIQUE FEDERALE DE LAUSANNE, Switzerland, Geo-Energy Laboratory, 2016-2025.  All rights reserved.
+# See the LICENSE.TXT file for more details.
+#
+#
+# ct friction case
+
+# %% General Imports
 import os
 import sys
+import re
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 from pathlib import Path
-import scipy
 import matplotlib
-from scipy import linalg
-import re
+import matplotlib.pyplot as plt
+import gmsh
 import scienceplots
 
 plt.style.use(["science", "grid"])
 
+
+#  Imports from PyFracX
 from pyfracx.mesh.usmesh import UnstructuredMesh
 from pyfracx.utils.json_dict_dataclass_utils import *
 from pyfracx.hm.HMFsolver import HMFSolution
+from pyfracx.loads.Injection import *
 from pyfracx.mechanics.H_Elasticity import *
-from pyfracx.mechanics import H_Elasticity
 
 # %% loading numerical results
 # here you need to change basefolder to the folder name of your simulation
 # set it to None to look for the most recent simulation
 basefolder = None
-basename = "3D-ctFriction-ctperm-benchmark"
+basename = "3D-HF-ReOpening-benchmark"
 
 # Looking for the most recent simulation
 if basefolder is None:
@@ -98,60 +109,81 @@ for step in step_numbers:
 param = json_read(os.path.join(basefolder, "Parameters"))
 
 mm = json_read(os.path.join(basefolder, "Mesh"))
-# %%
-alpha_hyd = param["Flow"]["Hydraulic diffusivity"]
-cond_hyd = param["Flow"]["Hydraulic conductivity"]
+mesh = UnstructuredMesh(2, np.array(mm["Coordinates"]), np.array(mm["Connectivity"]), 0)
+
 Qinj = param["Injection"]["Injection rate"]
-wh = param["Flow"]["Initial aperture"]
-T = param["T parameter"]
-f = param["Friction coefficient"]
-E = param["Elasticity"]["Young"]
+YoungM = param["Elasticity"]["Young"]
 nu = param["Elasticity"]["Nu"]
-G = E / (2 * (1 + nu))
+wh_o = param["Flow"]["Initial aperture"]
+fluid_visc = param["Flow"]["Fluid viscosity"]
+hyd_cond = param["Flow"]["Hydraulic conductivity"]
+c_f = param["Flow"]["Storage "]
+f_p = param["Friction coefficient"]
 
-Nelts = mm["Nelts"]
-conn = np.array(mm["Connectivity"])
-coor = np.array(mm["Coordinates"])
-Nnodes = len(coor)
-mesh = UnstructuredMesh(3, coor, conn, 0)
 
-colPts = [
-    (coor[conn[i][0]] + coor[conn[i][1]] + coor[conn[i][2]]) / 3.0 for i in range(Nelts)
-]  # put it in UnstructuredMesh
-r = np.array([scipy.linalg.norm(coor[i]) for i in range(Nnodes)])
-r_col = np.array([scipy.linalg.norm(colPts[i]) for i in range(Nelts)])
+p0 = 0.0
+dp_star = Qinj / ((4.0 * np.pi) * (hyd_cond * wh_o))
 
-# %%
-## plotting the unstructured mesh
-triang = matplotlib.tri.Triangulation(coor[:, 0], coor[:, 1], triangles=conn, mask=None)
-fig1, ax1 = plt.subplots()
-ax1.set_aspect("equal")
-ax1.triplot(triang, "b-", lw=1)
-ax1.plot(0.0, 0.0, "ko", label="Injection point")
-plt.legend()
-plt.title("3D Mesh")
-plt.savefig(os.path.join(figure_dir, "mesh_3d.png"), dpi=200, bbox_inches="tight")
-# plt.show()
+tend = res[-1].time
 
-# %%
-# Create hmatrix for using the functions
+G = YoungM / (1 + nu) / 2
 
+k_frac = wh_o**2 / 12
+alpha_h = k_frac / (fluid_visc * c_f)
+
+the_inj = Injection(np.array([0.0, 0.0]), np.array([[0.0, Qinj]]), "Rate")
+
+triang = matplotlib.tri.Triangulation(
+    mesh.coor[:, 0], mesh.coor[:, 1], triangles=mesh.conn, mask=None
+)
+
+# %% We rebuild the hmat to get the local - global conversions
 
 kernel = "3DT0-H"
-elas_properties = np.array([E, nu])
+elas_properties = np.array([YoungM, nu])
 elastic_m = Elasticity(
-    kernel, elas_properties, max_leaf_size=64, eta=3.0, eps_aca=1.0e-3
+    kernel, elas_properties, max_leaf_size=32, eta=3, eps_aca=1.0e-5, n_openMP_threads=8
 )
 # hmat creation
 h1 = elastic_m.constructHmatrix(mesh)
 
+# %% time evolution of inlet pressure
+inj_pressure = np.zeros(len(res))
+timestamp = np.zeros(len(res))
+i_inj = the_inj.locate_in_mesh(mesh)
+for k in range(len(res)):
+    inj_pressure[k] = res[k].pressure[i_inj]
+    timestamp[k] = res[k].time
+
+fig1, ax1 = plt.subplots()
+ax1.plot(timestamp, inj_pressure, label="Numerical")
+plt.xlabel("Time (s)")
+plt.ylabel("Injection pressure (Pa)")
+plt.legend()
+plt.savefig(
+    os.path.join(figure_dir, "injection_pressure_vs_time.png"),
+    dpi=200,
+    bbox_inches="tight",
+)
+# plt.show()
+
 # %%
 solN = res[-1]
 
-rcoor = (coor[:, 0] ** 2 + coor[:, 1] ** 2) ** (0.5)
+rcoor = (mesh.coor[:, 0] ** 2 + mesh.coor[:, 1] ** 2) ** (0.5)
+
+fig1, ax1 = plt.subplots()
+tri = ax1.tricontourf(triang, solN.pressure, cmap=plt.cm.rainbow, alpha=0.5)
+ax1.axis("equal")
+plt.colorbar(tri)
+plt.title("Fluid pressure (Pa)")
+plt.savefig(
+    os.path.join(figure_dir, "pressure_contour.png"), dpi=200, bbox_inches="tight"
+)
+# plt.show()
 
 fig, ax = plt.subplots()
-ax.plot(r_col, solN.pressure, ".", label="Numerical")
+ax.plot(rcoor, solN.pressure, ".", label="Numerical")
 plt.xlabel("r (m)")
 plt.ylabel("Pressure (Pa)")
 plt.legend()
@@ -160,7 +192,9 @@ plt.savefig(
 )
 # plt.show()
 
+
 # %% slip
+
 global_dds = h1.convert_to_global(solN.DDs)
 
 fig1, ax1 = plt.subplots()
@@ -194,7 +228,7 @@ plt.savefig(
 # plt.show()
 
 col_pts = np.asarray(
-    [np.mean(coor[conn[e, :], :], axis=0) for e in range(Nelts)]
+    [np.mean(mesh.coor[mesh.conn[e, :], :], axis=0) for e in range(mesh.nelts)]
 )  # h1.getCollocationPoints()
 rcoor_mid = np.sqrt(col_pts[:, 0] ** 2 + col_pts[:, 1] ** 2)
 fig, ax = plt.subplots()
@@ -217,36 +251,19 @@ plt.savefig(
 )
 # plt.show()
 
-# %%
-plastic_dds = h1.convert_to_global(res[-1].DDs_plastic)
 
 fig, ax = plt.subplots()
-ax.plot(r_col, -plastic_dds[0::3], ".r", label="Plastic slip")
-ax.plot(r_col, -global_dds[0::3] + plastic_dds[0::3], ".b", label="Elastic slip")
+ax.plot(rcoor_mid, (global_dds[2::3] / wh_o) ** 3.0, ".", label="Numerical")
 plt.xlabel("r (m)")
-plt.ylabel("Slip (m)")
+plt.ylabel("Transmissivity increase (-)")
 plt.legend()
-# plt.xlim(0, 15)
 plt.savefig(
-    os.path.join(figure_dir, "slip_plastic_elastic_comparison.png"),
+    os.path.join(figure_dir, "transmissivity_increase_vs_radius.png"),
     dpi=200,
     bbox_inches="tight",
 )
 # plt.show()
 
-
-fig, ax = plt.subplots()
-ax.plot(r_col, plastic_dds[2::3], ".r", label="Plastic opening")
-ax.plot(r_col, global_dds[2::3] - plastic_dds[2::3], ".b", label="Elastic opening")
-plt.xlabel("r (m)")
-plt.ylabel("Opening (m)")
-plt.legend()
-plt.savefig(
-    os.path.join(figure_dir, "opening_plastic_elastic_comparison.png"),
-    dpi=200,
-    bbox_inches="tight",
-)
-# plt.show()
 # %% yield function
 
 fig1, ax1 = plt.subplots()

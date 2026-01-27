@@ -1,8 +1,16 @@
 ##!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import numpy as np
 from matplotlib import pyplot as plt
+from dataclasses import dataclass
+import numpy as np
+from scipy.optimize import root
+from scipy.special import ellipeinc as E
+from scipy.special import ellipkinc as F
+import json
+import glob, re
 
 # Modified from Pyfrac M-vertex solution
 
@@ -159,9 +167,6 @@ class PennyShape_Mvertex:
 
 
 # %%
-from dataclasses import dataclass
-import numpy as np
-from scipy.optimize import root
 
 
 @dataclass(frozen=False)
@@ -292,7 +297,7 @@ class HFShearModelAxiSym:
     def netpressurescalebysigop_time(self):
         tc = self.Ep**2 * self.mup / self.sig0p**3
         return tc
-    
+
     def rbyrootct_time(self):
         tc = self.Ep**2 * self.Q0**6 / self.mup**3 / self.c**9
         return tc
@@ -335,8 +340,6 @@ class HFShearModelAxiSym:
         Y = fs * (sig0 - p0)
         a : Rs shear front
         """
-        from scipy.special import ellipeinc as E
-        from scipy.special import ellipkinc as F
 
         p0 = self.tau0
         Y = self.fs * (self.sig0 - self.p0)
@@ -348,7 +351,6 @@ class HFShearModelAxiSym:
         # shear front, a in paper
         a = l / m
         print(a, l, m)
-
 
         # multpliplied by 2 as w in paper is half opening
         delstar = (8 * (1 - self.nu**2) * a * Y) / (np.pi * self.E)
@@ -364,10 +366,15 @@ class HFShearModelAxiSym:
         mu2 = np.arcsin(sinmu2)
 
         # Eq. 5a
-        eq5a = lam * np.sqrt(1 - rho**2) - sinmu1 + m * E(mu1, rho / m) 
+        eq5a = lam * np.sqrt(1 - rho**2) - sinmu1 + m * E(mu1, rho / m)
 
         # Eq. 5b
-        eq5b = lam * np.sqrt(1 - rho**2) - sinmu2 + rho * E(mu2, m / rho) + ((m**2-rho**2)/rho) * F(mu2, m / rho)
+        eq5b = (
+            lam * np.sqrt(1 - rho**2)
+            - sinmu2
+            + rho * E(mu2, m / rho)
+            + ((m**2 - rho**2) / rho) * F(mu2, m / rho)
+        )
 
         slip = np.zeros_like(rho)
         fl = rho < m
@@ -377,7 +384,6 @@ class HFShearModelAxiSym:
 
         fl = rho >= 1
         slip[fl] = 0.0
-
 
         return slip * delstar
 
@@ -403,8 +409,6 @@ class HFShearModelAxiSym:
         v = self.hf_model.velocity_at_time(t)
         return self.alpha / v
 
-import json
-import glob, re
 
 class AxisymmHFShearSimulation:
 
@@ -415,7 +419,7 @@ class AxisymmHFShearSimulation:
         self.calculate_fronts(self.soln)
 
     def read_mesh(self, folder):
-        file = open(folder + "/Mesh.json", "r")
+        file = open(os.path.join(folder, "Mesh.json"), "r")
         mesh = json.load(file)
         coord = np.array(mesh["Coordinates"])
         conn = np.array(mesh["Connectivity"])
@@ -430,12 +434,12 @@ class AxisymmHFShearSimulation:
         self.col_pts = col_pts
         self.colPts = colPts
         self.hx = h_x
-        self.coord  = coord
+        self.coord = coord
         self.coor1D = coor1D
 
     def read_parameters(self, folder):
 
-        file = open(folder + "/Parameters.json", "r")
+        file = open(os.path.join(folder, "Parameters.json"), "r")
         params = json.load(file)
         E = params["Elasticity"]["Young"]
         nu = params["Elasticity"]["Nu"]
@@ -512,11 +516,10 @@ class AxisymmHFShearSimulation:
                 shear_front[i] = np.sum(soln[i]["Nyielded"]) * h_x
             except:
                 shear_front[i] = 0.0
-        self.tts = np.array([soln[i]["time"] for i in range(len(soln))], np.float_)
+        self.tts = np.array([soln[i]["time"] for i in range(len(soln))], np.float64)
         self.open_front = open_front
         self.shear_front = shear_front
         self.pressure_front = pressure_front
-
 
     def read_timestep(self, folder):
 
@@ -525,6 +528,7 @@ class AxisymmHFShearSimulation:
             pattern = r"(\d+)\.json$"
             match = re.search(pattern, fp)
             return float(match.group(1))
+
         basename = "3DAxiSymmHF"
         files = sorted(glob.glob(folder + "/" + basename + "*.json"), key=get_key)
         soln = []
@@ -608,11 +612,17 @@ class AxisymmHFShearSimulation:
             wanal = self.model.hf_model.opening_profile_at_time(col_pts, time)
             crack_vol_anal = np.trapz(2 * np.pi * colPts * (wanal), colPts) / (Q * time)
             crack_vol = np.trapz(
-                2 * np.pi * colPts[:open_front_index] * (ddp[1 : 2 * open_front_index + 1 : 2]),
+                2
+                * np.pi
+                * colPts[:open_front_index]
+                * (ddp[1 : 2 * open_front_index + 1 : 2]),
                 colPts[:open_front_index],
             )
             crack_vol_elas = np.trapz(
-                2 * np.pi * colPts[:open_front_index] * (dde[1 : 2 * open_front_index + 1 : 2]),
+                2
+                * np.pi
+                * colPts[:open_front_index]
+                * (dde[1 : 2 * open_front_index + 1 : 2]),
                 colPts[:open_front_index],
             )
             crack_vol_who = np.trapz(
@@ -632,6 +642,3 @@ class AxisymmHFShearSimulation:
         velout_list = np.array(velout_list)
 
         return fluxlist, crack_vol_list, velout_list
-
-
-

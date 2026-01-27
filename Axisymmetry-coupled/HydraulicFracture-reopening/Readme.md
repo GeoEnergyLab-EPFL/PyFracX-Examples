@@ -17,14 +17,14 @@ $$
 
 ##### fronts vs time
 
-![alt text](figs/frontradiusvstime-mvertex.png)
+![alt text](figures_ref/frontradiusvstime-mvertex.png)
 
 
 ##### opening profile
-![alt text](figs/openingprofile-mvertex.png)
+![alt text](figures_ref/openingprofile-mvertex.png)
 
 ##### net pressure profile
-![alt text](figs/stress-mvertex.png)
+![alt text](figures_ref/stress-mvertex.png)
 
 ### 2. Diffusion regime
 #### Parameters
@@ -43,11 +43,11 @@ $$
 
 ##### fronts vs time
 
-![alt text](figs/frontradiusvstime-diffusion.png)
+![alt text](figures_ref/frontradiusvstime-diffusion.png)
 
 
 ##### opening profile
-![alt text](figs/openingprofile-diffusion.png)
+![alt text](figures_ref/openingprofile-diffusion.png)
 
 ##### net pressure profile
-![alt text](figs/stress-diffusion.png)
+![alt text](figures_ref/stress-diffusion.png)
